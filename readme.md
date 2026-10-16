@@ -85,3 +85,27 @@ Refer to the [mailparser docs](https://github.com/andris9/mailparser#attachment-
 ## License
 
 MIT
+
+## Optional reconnection
+
+Automatic reconnection is disabled by default. Set `reconnect: true` to retry
+closed IMAP sessions while the listener is started. `reconnectDelay` defaults to
+1000 milliseconds; `reconnectMaxDelay` defaults to 30000 milliseconds. Consecutive
+failures double the delay up to the maximum. Opening the mailbox successfully
+resets the delay. Authentication failures are also retried with this backoff.
+
+`server:reconnecting` emits the delay in milliseconds before each scheduled
+attempt. Existing error and disconnected events are still emitted. Register an
+`error` handler as usual. `stop()` cancels pending retries and prevents automatic
+reconnection; call `start()` explicitly to resume. This does not add durable mail
+delivery or change the markSeen policy.
+
+Tests (Node.js 22, after installing dependencies):
+
+```sh
+node tests/reconnection.test.js
+node tests/reconnection-socket.test.js
+```
+
+The socket test uses an ephemeral loopback IMAP server and synthetic credentials;
+it does not access a real mailbox.
