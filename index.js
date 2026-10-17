@@ -4,6 +4,7 @@ var Imap = require('imap'),
     MailParser = require("mailparser").MailParser,
     fs = require("fs"),
     path = require('path'),
+    crypto = require('crypto'),
     async = require('async');
 
 module.exports = MailListener;
@@ -127,12 +128,12 @@ function parseUnread() {
                     parser.on("end", function (mail) {
                         if (!self.mailParserOptions.streamAttachments && mail.attachments && self.attachments) {
                             async.each(mail.attachments, function (attachment, callback) {
-                                fs.writeFile(self.attachmentOptions.directory + attachment.generatedFileName, attachment.content, function (err) {
+                                saveAttachment(attachment, self.attachmentOptions, function (err, filename) {
                                     if (err) {
                                         self.emit('error', err);
                                         callback();
                                     } else {
-                                        attachment.path = path.resolve(self.attachmentOptions.directory + attachment.generatedFileName);
+                                        attachment.path = path.resolve(filename);
                                         self.emit('attachment', attachment, mail);
                                         callback();
                                     }
@@ -172,5 +173,22 @@ function parseUnread() {
         } else {
             self.emit('done');
         }
+    });
+}
+
+function saveAttachment(attachment, options, callback) {
+    if (options.uniqueFilenames !== true) {
+        var legacyPath = options.directory + attachment.generatedFileName;
+        return fs.writeFile(legacyPath, attachment.content, function (err) {
+            callback(err, legacyPath);
+        });
+    }
+    crypto.randomBytes(16, function (err, bytes) {
+        if (err) return callback(err);
+        var filename = path.join(options.directory, bytes.toString('hex') + '-' + path.basename(attachment.generatedFileName));
+        // Exclusive creation also protects existing files if a random name collides.
+        fs.writeFile(filename, attachment.content, {flag: 'wx'}, function (err) {
+            callback(err, filename);
+        });
     });
 }
