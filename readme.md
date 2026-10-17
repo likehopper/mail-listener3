@@ -109,3 +109,20 @@ node tests/reconnection-socket.test.js
 
 The socket test uses an ephemeral loopback IMAP server and synthetic credentials;
 it does not access a real mailbox.
+
+
+### Unique attachment filenames
+
+For buffered attachment downloads, opt into collision-safe storage with
+`attachmentOptions: { directory: "attachments/", uniqueFilenames: true }`.
+Each saved file receives a random 128-bit prefix followed by its generated base
+name. The download directory must already exist. `attachment.path` identifies
+the actual saved file, while `generatedFileName` retains the original parser
+name. Exclusive creation refuses a collision instead of overwriting a file.
+Write or random-generation failures emit an error and leave the attachment
+without a successful path; consumers must handle incomplete downloads.
+
+This option is off by default to preserve existing naming behavior. It does not
+change streamed attachments or add retention/purge behavior. Retrying a message
+can create another distinct file; callers requiring deduplication need their
+own persistent message identity handling.
