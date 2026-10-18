@@ -126,3 +126,9 @@ This option is off by default to preserve existing naming behavior. It does not
 change streamed attachments or add retention/purge behavior. Retrying a message
 can create another distinct file; callers requiring deduplication need their
 own persistent message identity handling.
+
+Unique stored filenames are capped at 255 UTF-8 bytes including the random prefix.
+Long stems are shortened without splitting Unicode characters; the original
+`generatedFileName` metadata is retained. Extensions are preserved when they fit
+within the available suffix budget; an oversized extension is truncated as part
+of the complete name. Short names, legacy naming and streaming are unchanged.
