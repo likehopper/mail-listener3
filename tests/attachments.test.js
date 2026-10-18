@@ -120,3 +120,33 @@ test('an unavailable directory emits an error without a successful attachment pa
     assert.equal(s.errors[0].code,'ENOENT');
   } finally {fs.rmSync(dir,{recursive:true,force:true});}
 });
+
+for (const name of ['a'.repeat(240)+'.pdf', 'é'.repeat(115)+'.pdf', '📄'.repeat(60)+'.pdf']) {
+  test('unique filenames fit the byte limit without splitting Unicode: '+Buffer.byteLength(name)+' bytes', async () => {
+    const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mail-listener-attachments-'));
+    try {
+      const s=setup(dir,true);
+      const attachment=await s.receive('long-name content',name);
+      assert.equal(s.errors.length,0,'Long file name must not fail with ENAMETOOLONG');
+      assert.equal(attachment.generatedFileName,name,'Original parser filename metadata must remain unchanged');
+      assert(Buffer.byteLength(path.basename(attachment.path))<=255);
+      assert(attachment.path.endsWith('.pdf'));
+      assert(!attachment.path.includes('\uFFFD'),'Truncation must not split a UTF-8 character');
+      assert.equal(fs.readFileSync(attachment.path,'utf8'),'long-name content');
+    } finally {fs.rmSync(dir,{recursive:true,force:true});}
+  });
+}
+
+test('byte boundary, extensionless names and oversized suffixes stay within the limit',async()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'mail-listener-attachments-'));
+ try {
+  const s=setup(dir,true);const boundary='a'.repeat(218)+'.pdf';
+  for(const name of [boundary,'x'.repeat(300),'file.'+'x'.repeat(300)]){
+   const attachment=await s.receive('boundary content',name);
+   assert.equal(s.errors.length,0);
+   assert(Buffer.byteLength(path.basename(attachment.path))<=255);
+   if(name===boundary)assert.equal(path.basename(attachment.path).slice(33),name,'An already fitting name must remain exact');
+   assert.equal(fs.readFileSync(attachment.path,'utf8'),'boundary content');
+  }
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
+});
