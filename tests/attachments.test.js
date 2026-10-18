@@ -25,7 +25,7 @@ function setup(directory, uniqueFilenames, crypto = require('crypto')) {
   }
   const context = {module:{exports:{}}, require(name) {
     if(name === 'imap') return Imap;
-    if(name === 'mailparser') return {MailParser:Parser};
+    if(name === './mail-parser') return Parser;
     if(name === 'crypto') return crypto;
     if(name === 'async') return {each(items, iterator, done) {
       let remaining = items.length;
