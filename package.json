@@ -1,21 +1,32 @@
 {
     "name": "mail-listener3",
-    "version": "0.0.3",
+    "version": "0.1.0",
     "description": "Mail listener library for node.js. Get notification when new email arrived.",
     "dependencies": {
-      "imap": "~0.8.14",
-      "mailparser": "~0.4.6",
-      "async": "^0.9.0"
+        "imap": "~0.8.14",
+        "mailparser": "3.9.40",
+        "async": "^0.9.0",
+        "mime-types": "3.0.2"
     },
     "repository": {
         "type": "git",
         "url": "git://github.com/reecefenwick/mail-listener3.git"
     },
     "homepage": "https://github.com/reecefenwick/mail-listener3",
-    "keywords": ["mail", "job", "imap", "mail listener", "email", "email parser"],
+    "keywords": [
+        "mail",
+        "job",
+        "imap",
+        "mail listener",
+        "email",
+        "email parser"
+    ],
     "author": {
         "name": "Reece Fenwick",
         "email": "fenwickreece08@gmail.com"
     },
-    "license": "MIT"
+    "license": "MIT",
+    "engines": {
+        "node": ">=20.0.0"
+    }
 }

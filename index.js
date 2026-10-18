@@ -1,7 +1,7 @@
 var Imap = require('imap'),
     util = require('util'),
     EventEmitter = require('events').EventEmitter,
-    MailParser = require("mailparser").MailParser,
+    MailParser = require("./mail-parser"),
     fs = require("fs"),
     path = require('path'),
     crypto = require('crypto'),
@@ -125,6 +125,7 @@ function parseUnread() {
                 f.on('message', function (msg, seqno) {
                     var parser = new MailParser(self.mailParserOptions);
                     var attributes = null;
+                    parser.on("error", function (error) { self.emit("error", error); });
 
                     parser.on("end", function (mail) {
                         if (!self.mailParserOptions.streamAttachments && mail.attachments && self.attachments) {
