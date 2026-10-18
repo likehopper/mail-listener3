@@ -5,6 +5,7 @@ var Imap = require('imap'),
     fs = require("fs"),
     path = require('path'),
     crypto = require('crypto'),
+    Buffer = require('buffer').Buffer,
     async = require('async');
 
 module.exports = MailListener;
@@ -185,10 +186,35 @@ function saveAttachment(attachment, options, callback) {
     }
     crypto.randomBytes(16, function (err, bytes) {
         if (err) return callback(err);
-        var filename = path.join(options.directory, bytes.toString('hex') + '-' + path.basename(attachment.generatedFileName));
+        var prefix = bytes.toString('hex') + '-';
+        var filename = path.join(options.directory, prefix + boundedFilename(path.basename(attachment.generatedFileName), 255 - Buffer.byteLength(prefix, 'utf8')));
         // Exclusive creation also protects existing files if a random name collides.
         fs.writeFile(filename, attachment.content, {flag: 'wx'}, function (err) {
             callback(err, filename);
         });
     });
+}
+
+
+function boundedFilename(name, budget) {
+    if (Buffer.byteLength(name, 'utf8') <= budget) return name;
+    var extension = path.extname(name);
+    if (Buffer.byteLength(extension, 'utf8') > budget) extension = '';
+    var stem = extension ? name.slice(0, -extension.length) : name;
+    var remaining = budget - Buffer.byteLength(extension, 'utf8');
+    var result = '', length = 0;
+    for (var i = 0; i < stem.length; i++) {
+        var character = stem.charAt(i);
+        var code = stem.charCodeAt(i);
+        // Keep UTF-16 surrogate pairs together when counting UTF-8 bytes.
+        if (code >= 0xD800 && code <= 0xDBFF && i + 1 < stem.length &&
+            stem.charCodeAt(i + 1) >= 0xDC00 && stem.charCodeAt(i + 1) <= 0xDFFF) {
+            character += stem.charAt(++i);
+        }
+        var size = Buffer.byteLength(character, 'utf8');
+        if (length + size > remaining) break;
+        result += character;
+        length += size;
+    }
+    return result + extension;
 }
