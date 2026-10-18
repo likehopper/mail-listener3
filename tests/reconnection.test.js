@@ -19,7 +19,7 @@ function setup(options = {}) {
     module: { exports: {} },
     require(name) {
       if (name === 'imap') return Imap;
-      if (name === 'mailparser') return { MailParser: function () {} };
+      if (name === './mail-parser') return function () {};
       if (name === 'async') return {};
       return require(name);
     },
