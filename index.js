@@ -146,6 +146,7 @@ function parseUnread() {
                             });
                         } else {
                             self.emit('mail', mail, seqno, attributes);
+                            callback();
                         }
                         remaining = remaining - 1;
                         if (remaining == 0) {
